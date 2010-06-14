@@ -15,12 +15,14 @@
   <script type="text/javascript">
   
   $(document).ready(function() {
-    $(".example").treeTable();
-
+    // TODO Fix issue with multiple treeTables on one page, each with different options
+    // Moving the #example3 treeeTable call down will break other treeTables that are expandable...
     $("#example3").treeTable({
       expandable: false
     });
     
+    $(".example").treeTable();
+
     // Drag & Drop Example Code
     $("#dnd-example .file, #dnd-example .folder").draggable({
       helper: "clone",
@@ -39,7 +41,7 @@
         },
         hoverClass: "accept",
         over: function(e, ui) {
-          if(this.id != $(ui.draggable.parents("tr.parent")[0]).id && !$(this).is(".expanded")) {
+          if(this.id != $(ui.draggable.parents("tr")[0]).id && !$(this).is(".expanded")) {
             $(this).treeTable("expand");
           }
         }
@@ -51,7 +53,7 @@
       $("tr.selected").removeClass("selected"); // Deselect currently selected rows
       $(this).addClass("selected");
     });
-
+    
     // Make sure row is selected when span is clicked
     $("table#dnd-example tbody tr span").mousedown(function() {
       $($(this).parents("tr")[0]).trigger("mousedown");
@@ -206,6 +208,12 @@ $(document).ready(function()  {
       <td><tt>string</tt></td>
       <td><tt>&quot;child-of-&quot;</tt></td>
       <td>Customize the prefix used for node classes.</td>
+    </tr>
+    <tr>
+      <td><tt>clickableNodeNames</tt></td>
+      <td><tt>bool</tt></td>
+      <td><tt>false</tt></td>
+      <td>Set to true to expand branches not only when expander icon is clicked but also when node name is clicked.</td>
     </tr>
     <tr>
       <td><tt>expandable</tt></td>
@@ -498,7 +506,7 @@ $("#dnd-example .folder").each(function() {
     hoverClass: "accept",
     over: function(e, ui) {
       // Make the droppable branch expand when a draggable node is moved over it.
-      if(this.id != $(ui.draggable.parents("tr.parent")[0]).id && !$(this).is(".expanded")) {
+      if(this.id != $(ui.draggable.parents("tr")[0]).id && !$(this).is(".expanded")) {
         $(this).treeTable("expand");
       }
     }

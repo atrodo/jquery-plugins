@@ -1,9 +1,16 @@
-/* jQuery treeTable Plugin 2.2.2-dev - http://ludo.cubicphuse.nl/jquery-plugins/treeTable/ */
+/*
+ * jQuery treeTable Plugin 2.3.0
+ * http://ludo.cubicphuse.nl/jquery-plugins/treeTable/
+ *
+ * Copyright 2010, Ludo van den Boom
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ */
 (function($) {
   
   var publicFunctions = {
     expand: expand,
     collapse: collapse,
+    reveal: reveal,
     lazyLoadData: lazyLoadData,
     resetParent: resetParent,
     toggle: toggleBranch,
@@ -32,21 +39,33 @@
       var nodes = table.find("tbody tr");
       table.find("tbody td").css("padding-left", options.rootIndent);
       nodes.each(function() {
-        // Initialize root nodes only whenever possible
+        // Initialize root nodes only if possible
         if (typeof options.lazy_load === "object") {
           $(this).addClass("lazyLoading");
         };
-        initialize($(this));
+        if(!options.expandable || $(this)[0].className.search(options.childPrefix) == -1) {
+          // To optimize performance of indentation, I retrieve the padding-left
+          // value of the first root node. This way I only have to call +css+ 
+          // once.
+          if (isNaN(options.defaultPaddingLeft)) {
+            options.defaultPaddingLeft = parseInt($($(this).children("td")[options.treeColumn]).css('padding-left'), 10);
+          }
+          
+          initialize($(this));
+        } else if(options.initialState == "collapsed") {
+          this.style.display = "none"; // Performance! $(this).hide() is slow...
+        }
       });
     });
   };
   
   $.fn.treeTable.defaults = {
     childPrefix: "child-of-",
-    drop_location: "top",
+    clickableNodeNames: false,
     expandable: true,
     indent: 19,
     rootIndent: 19,
+    defaultPaddingLeft: null,
     initialState: "collapsed",
     treeColumn: 0,
     trustParent: false,
@@ -75,7 +94,7 @@
         collapse(child);
       }
       
-      child.hide();
+      this.style.display = "none"; // Performance! $(this).hide() is slow...
     });
     
     return node;
@@ -94,15 +113,26 @@
     removeIconClasses(node.find("span.expander")).addClass(options.openClass);
     childrenOf(node).each(function() {
       initialize($(this));
-            
+      
       if($(this).is(".expanded.parent")) {
         expand($(this));
       }
       
+      // this.style.display = "table-row"; // Unfortunately this is not possible with IE :-(
       $(this).show();
     });
 
     return node;
+  };
+
+  //Reveal a node by expanding all ancestors
+  function reveal(node) {
+    $(ancestorsOf(node).reverse()).each(function() {
+      initialize($(this));
+      $(this).expand().show();
+    });
+    
+    return this;
   };
 
   // Add an entire branch to +destination+
@@ -112,13 +142,6 @@
     var parent = parentOf(node);
     
     var ancestorNames = $.map(ancestorsOf($(destination)), function(a) { return a.id; });
-    
-    // Append branch at bottom of destination's branch when dropped on destination
-    if(options.drop_location == "bottom") {
-      move_to = childrenOf($(destination)).reverse()[0];
-    } else {
-      move_to = destination;
-    }
     
     // Conditions:
     // 1: +node+ should not be inserted in a location in a branch if this would
@@ -181,10 +204,16 @@
     return node.closest(".treeTable").find("tr." + options.childPrefix + node.attr("id"));
   };
 
+  function getPaddingLeft(node) {
+    var options = optionsForNode(node)
+    var paddingLeft = parseInt(node[0].style.paddingLeft, 10);
+    return (isNaN(paddingLeft)) ? options.defaultPaddingLeft : paddingLeft;
+  }
+
   function indent(node, value) {
     var options = optionsForNode(node);
     var cell = node.children("td").eq(options.treeColumn);
-    var padding = parseInt(cell.css("padding-left"), 10) + value;
+    var padding = getPaddingLeft(cell) + value;
 
     cell.css("padding-left", padding + "px");
     
