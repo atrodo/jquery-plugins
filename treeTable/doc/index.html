@@ -9,6 +9,7 @@
 
   <!-- BEGIN Plugin Code -->
   
+  <link href="stylesheets/jquery-ui.css" rel="stylesheet" type="text/css" />
   <link href="../src/stylesheets/jquery.treeTable.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="../src/javascripts/jquery.treeTable.js"></script>
   <script type="text/javascript">
@@ -39,7 +40,7 @@
         hoverClass: "accept",
         over: function(e, ui) {
           if(this.id != $(ui.draggable.parents("tr.parent")[0]).id && !$(this).is(".expanded")) {
-            $(this).expand();
+            $(this).treeTable("expand");
           }
         }
       });
@@ -498,7 +499,7 @@ $("#dnd-example .folder").each(function() {
     over: function(e, ui) {
       // Make the droppable branch expand when a draggable node is moved over it.
       if(this.id != $(ui.draggable.parents("tr.parent")[0]).id && !$(this).is(".expanded")) {
-        $(this).expand();
+        $(this).treeTable("expand");
       }
     }
   });
